@@ -1,0 +1,12 @@
+django
+
+djangorestframework
+markdown
+django-filter
+django-environ
+celery[redis]
+psycopg2-binary
+requests
+
+drf-spectacular
+environ
