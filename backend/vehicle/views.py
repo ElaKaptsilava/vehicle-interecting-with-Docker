@@ -5,6 +5,7 @@ from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -16,7 +17,7 @@ class RateViewSet(ModelViewSet):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['rate']
+    filterset_fields = ['rate', 'vehicle']
 
 
 class VehicleViewSet(ModelViewSet):
@@ -57,3 +58,10 @@ class VehicleViewSet(ModelViewSet):
         raise ObjectDoesNotExist(
             f'Vehicle with model name:{model_name_params}, make name:{make_name_params} dose not exist.'
             f'into link {url}')
+
+    @action(methods=['GET', ], detail=True, url_path='rate')
+    def get_rate(self, request, pk=None):
+        vehicle = Vehicle.objects.get(pk=pk)
+        vehicle_rates = vehicle.rate_set.all()
+        rate_serializer = RateSerializer(instance=vehicle_rates, many=True)
+        return Response(rate_serializer.data)
