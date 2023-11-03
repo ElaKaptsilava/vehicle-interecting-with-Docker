@@ -65,3 +65,7 @@ class VehicleViewSet(ModelViewSet):
         vehicle_rates = vehicle.rate_set.all()
         rate_serializer = RateSerializer(instance=vehicle_rates, many=True)
         return Response(rate_serializer.data)
+
+    @action(methods=['GET'], detail=False, url_path='popular')
+    def get_popular(self, request):
+        pass
