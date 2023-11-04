@@ -1,9 +1,7 @@
 import requests
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
-from django.db import models
-from django.db.models import Avg
+from django.db import transaction, models
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -24,13 +22,24 @@ class RateViewSet(ModelViewSet):
 
 class VehicleViewSet(ModelViewSet):
     serializer_class = VehicleSerializer
-    queryset = Vehicle.objects.with_average_rate()
+    queryset = Vehicle.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['model_name', 'make_name']
 
+    def get_queryset(self):
+        return super().get_queryset().annotate(
+            avg_rate=models.Case(
+                models.When(
+                    rate__rate__isnull=False,
+                    then=True),
+                default=models.Value(False),
+                output_field=models.BooleanField()
+            )
+        )
+
     def create(self, request, *args, **kwargs):
-        model_name = request.query_params.get('model_name', None)
-        make_name = request.query_params.get('make_name', None)
+        model_name = request.data.get('model_name', None)
+        make_name = request.data.get('make_name', None)
         if model_name is not None and make_name is not None:
             vehicle_data = self.create_from_link(model_name_params=model_name, make_name_params=make_name)
             with transaction.atomic():
@@ -40,7 +49,7 @@ class VehicleViewSet(ModelViewSet):
                     return Response(serializer_vehicle.data)
                 else:
                     return Response(
-                        data={'message': 'Serializer.vehicle is not valid'},
+                        data={'message': f'{serializer_vehicle} is not valid'},
                         status=status.HTTP_400_BAD_REQUEST)
         return Response({"message": f"Model_name: {model_name}, make_name: {make_name}, are required parameters"},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -72,5 +81,3 @@ class VehicleViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular(self, request):
         pass
-
-
