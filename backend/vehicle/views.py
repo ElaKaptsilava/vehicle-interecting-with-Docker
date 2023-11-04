@@ -2,6 +2,8 @@ import requests
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db import models
+from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import status
@@ -22,7 +24,7 @@ class RateViewSet(ModelViewSet):
 
 class VehicleViewSet(ModelViewSet):
     serializer_class = VehicleSerializer
-    queryset = Vehicle.objects.all()
+    queryset = Vehicle.objects.with_average_rate()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['model_name', 'make_name']
 
@@ -40,7 +42,7 @@ class VehicleViewSet(ModelViewSet):
                     return Response(
                         data={'message': 'Serializer.vehicle is not valid'},
                         status=status.HTTP_400_BAD_REQUEST)
-        return Response({"message": f"Model_name:{model_name}, make_name: {make_name}, are required parameters"},
+        return Response({"message": f"Model_name: {model_name}, make_name: {make_name}, are required parameters"},
                         status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
@@ -57,7 +59,8 @@ class VehicleViewSet(ModelViewSet):
                 return data
         raise ObjectDoesNotExist(
             f'Vehicle with model name:{model_name_params}, make name:{make_name_params} dose not exist.'
-            f'into link {url}')
+            f'into link {url}'
+        )
 
     @action(methods=['GET', ], detail=True, url_path='rate')
     def get_rate(self, request, pk=None):
@@ -69,3 +72,5 @@ class VehicleViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular(self, request):
         pass
+
+
