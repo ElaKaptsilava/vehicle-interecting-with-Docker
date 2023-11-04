@@ -70,9 +70,9 @@ class VehicleViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular(self, request):
         vehicle_avg = self.queryset.aggregate(models.Avg('rate__rate'))['rate__rate__avg'] or 0
-        C = 5
+        max_value = 5
         popular = self.queryset.annotate(
-            score=(C * vehicle_avg + models.Sum('rate__rate') + (C * models.Count('rate')))
+            score=(max_value * vehicle_avg + models.Sum('rate__rate') + (max_value * models.Count('rate')))
         ).order_by('score')[:1]
         serializer = VehicleSerializer(instance=popular, many=True)
         return Response(serializer.data)
