@@ -26,17 +26,6 @@ class VehicleViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['model_name', 'make_name']
 
-    def get_queryset(self):
-        return super().get_queryset().annotate(
-            avg_rate=models.Case(
-                models.When(
-                    rate__rate__isnull=False,
-                    then=True),
-                default=models.Value(False),
-                output_field=models.BooleanField()
-            )
-        )
-
     def create(self, request, *args, **kwargs):
         model_name = request.data.get('model_name', None)
         make_name = request.data.get('make_name', None)
@@ -80,4 +69,10 @@ class VehicleViewSet(ModelViewSet):
 
     @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular(self, request):
-        pass
+        vehicle_avg = self.queryset.aggregate(models.Avg('rate__rate'))['rate__rate__avg'] or 0
+        C = 5
+        popular = self.queryset.annotate(
+            score=(C * vehicle_avg + models.Sum('rate__rate') + (C * models.Count('rate')))
+        ).order_by('score')[:1]
+        serializer = VehicleSerializer(instance=popular, many=True)
+        return Response(serializer.data)
