@@ -77,3 +77,4 @@ class VehicleViewSet(ModelViewSet):
         ).order_by('score_popular_vehicle')[:1]
         vehicle_serializer = VehicleSerializer(instance=get_popular, many=True)
         return Response(vehicle_serializer.data)
+
