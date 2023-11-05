@@ -67,7 +67,7 @@ class VehicleViewSet(ModelViewSet):
         rate_serializer = RateSerializer(instance=vehicle_rates, many=True)
         return Response(rate_serializer.data)
 
-    @action(methods=['GET'], detail=False, url_path='get_popular')
+    @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular_vehicle_by_bayesian(self, request):
         average_rate_of_all_vehicles = self.queryset.aggregate(models.Avg('rate__rate'))['rate__rate__avg'] or 0
         min_number_of_rating = 1
