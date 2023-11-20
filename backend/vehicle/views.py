@@ -35,7 +35,7 @@ class VehicleViewSet(ModelViewSet):
                 serializer_vehicle = self.serializer_class(data=vehicle_data)
                 if serializer_vehicle.is_valid():
                     serializer_vehicle.save()
-                    return Response(serializer_vehicle.data)
+                    return Response(serializer_vehicle.data, status=status.HTTP_201_CREATED)
                 else:
                     return Response(
                         data={'message': f'{serializer_vehicle} is not valid'},
@@ -60,7 +60,7 @@ class VehicleViewSet(ModelViewSet):
             f'into link {url}'
         )
 
-    @action(methods=['GET', ], detail=True, url_path='rate')
+    @action(methods=['GET'], detail=True, url_path='rate')
     def get_rate(self, request, pk=None):
         vehicle = Vehicle.objects.get(pk=pk)
         vehicle_rates = vehicle.rate_set.all()
@@ -74,6 +74,12 @@ class VehicleViewSet(ModelViewSet):
         get_popular = self.queryset.annotate(
             score_popular_vehicle=(min_number_of_rating * average_rate_of_all_vehicles + models.Sum('rate__rate') + (
                     min_number_of_rating * models.Count('rate')))
-        ).order_by('score_popular_vehicle')[:1]
-        vehicle_serializer = VehicleSerializer(instance=get_popular, many=True)
+        ).order_by('score_popular_vehicle').first()
+        vehicle_serializer = VehicleSerializer(instance=get_popular)
+        return Response(vehicle_serializer.data)
+
+    @action(methods=['GET'], detail=False, url_path='max_rate')
+    def get_popular_vehicle(self, request):
+        get_popular = self.queryset.annotate(score=models.Sum('rate__rate')).order_by('score').first()
+        vehicle_serializer = VehicleSerializer(instance=get_popular)
         return Response(vehicle_serializer.data)

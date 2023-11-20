@@ -11,12 +11,13 @@ class VehicleSerializer(serializers.ModelSerializer):
         model = Vehicle
         fields = ['pk', 'make_ID', 'make_name', 'model_name', 'average_rate']
 
+
     def get_average_rate(self, obj):
         return obj.rate_set.aggregate(models.Avg('rate'))['rate__avg'] or 0
 
 
 class RateSerializer(serializers.ModelSerializer):
-    vehicle = VehicleSerializer(many=True)
+    #vehicle = VehicleSerializer(many=True)
 
     class Meta:
         model = Rate
