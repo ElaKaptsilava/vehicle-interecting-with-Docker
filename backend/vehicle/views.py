@@ -67,19 +67,21 @@ class VehicleViewSet(ModelViewSet):
         rate_serializer = RateSerializer(instance=vehicle_rates, many=True)
         return Response(rate_serializer.data)
 
-    @action(methods=['GET'], detail=False, url_path='popular')
+    @action(methods=['GET'], detail=False, url_path='popular-by-bayesian')
     def get_popular_vehicle_by_bayesian(self, request):
-        average_rate_of_all_vehicles = self.queryset.aggregate(models.Avg('rate__rate'))['rate__rate__avg'] or 0
-        min_number_of_rating = 1
-        get_popular = self.queryset.annotate(
-            score_popular_vehicle=(min_number_of_rating * average_rate_of_all_vehicles + models.Sum('rate__rate') + (
-                    min_number_of_rating * models.Count('rate')))
-        ).order_by('score_popular_vehicle').first()
-        vehicle_serializer = VehicleSerializer(instance=get_popular)
+        prior_mean = 4.0
+        prior_weight = 10
+        get_popular_by_bayesian = self.queryset.annotate(
+            bayesian_average=(
+                    ((models.Count('rate') * models.Avg('rate')) + (prior_weight * prior_mean)) /
+                    (models.Count('rate') + prior_weight)
+            )
+        ).order_by('bayesian_average').first()
+        vehicle_serializer = VehicleSerializer(instance=get_popular_by_bayesian)
         return Response(vehicle_serializer.data)
 
-    @action(methods=['GET'], detail=False, url_path='max_rate')
+    @action(methods=['GET'], detail=False, url_path='popular')
     def get_popular_vehicle(self, request):
-        get_popular = self.queryset.annotate(score=models.Sum('rate__rate')).order_by('score').first()
+        get_popular = self.queryset.annotate(models.Avg('rate')).order_by('rate__avg').first()
         vehicle_serializer = VehicleSerializer(instance=get_popular)
         return Response(vehicle_serializer.data)
