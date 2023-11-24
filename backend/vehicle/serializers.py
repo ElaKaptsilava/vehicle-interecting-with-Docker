@@ -5,20 +5,20 @@ from rest_framework import serializers
 
 
 class VehicleSerializer(serializers.ModelSerializer):
-    average_rate = serializers.SerializerMethodField()
-
     class Meta:
         model = Vehicle
-        fields = ['pk', 'make_ID', 'make_name', 'model_name', 'average_rate']
+        fields = ['make_ID', 'make_name', 'model_name']
 
 
-    def get_average_rate(self, obj):
-        return obj.rate_set.aggregate(models.Avg('rate'))['rate__avg'] or 0
+class VehicleInitialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['make_name', 'model_name']
 
 
 class RateSerializer(serializers.ModelSerializer):
-    #vehicle = VehicleSerializer(many=True)
+    vehicle = VehicleSerializer(many=True)
 
     class Meta:
         model = Rate
-        fields = ['id', 'rate', 'vehicle']
+        fields = ['rate', 'vehicle']

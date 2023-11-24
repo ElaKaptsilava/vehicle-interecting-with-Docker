@@ -4,7 +4,7 @@ from .views import VehicleViewSet, RateViewSet
 
 router = DefaultRouter()
 
-router.register(r'vehicles', VehicleViewSet, basename='vehicle')
-router.register(r'rates', RateViewSet, basename='rate')
+router.register(r'vehicles', VehicleViewSet, basename='vehicles')
+router.register(r'rates', RateViewSet, basename='rates')
 
 vehicle_urlpatterns = router.urls
